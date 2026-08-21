@@ -271,4 +271,4 @@ interface IOrderResponse {
 
 Методы класса:
 - `getProducts(): Promise<IProductsResponse>` — выполняет GET-запрос на эндпоинт `/product/` и возвращает промис с объектом, содержащим массив товаров
-- `makeOrder(data: IOrderRequest): Promise<IOrderResponse>` — выполняет POST-запрос на эндпоинт `/order` с данными заказа и возвращает промис с подтверждением покупки
+- `makeOrder(data: IOrderRequest): Promise<IOrderResponse>` — выполняет POST-запрос на эндпоинт `/order` с данными заказа и возвращает промис с подтверждением покупки.
