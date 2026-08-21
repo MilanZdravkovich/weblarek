@@ -98,3 +98,177 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
+## Данные
+
+### Тип оплаты
+
+`TPayment` — тип, описывающий доступные способы оплаты:
+- `'card'` — оплата картой
+- `'cash'` — оплата наличными
+
+```typescript
+type TPayment = 'card' | 'cash';
+```
+
+### Интерфейс IProduct
+
+Описывает товар в каталоге.
+
+Поля:
+- `id: string` — уникальный идентификатор товара
+- `description: string` — описание товара
+- `image: string` — путь к изображению товара
+- `title: string` — название товара
+- `category: string` — категория товара
+- `price: number | null` — цена товара (null, если товар недоступен)
+
+```typescript
+interface IProduct {
+  id: string;
+  description: string;
+  image: string;
+  title: string;
+  category: string;
+  price: number | null;
+}
+```
+
+### Интерфейс IBuyer
+
+Описывает данные покупателя при оформлении заказа.
+
+Поля:
+- `payment: TPayment` — выбранный способ оплаты
+- `email: string` — адрес электронной почты
+- `phone: string` — номер телефона
+- `address: string` — адрес доставки
+
+```typescript
+interface IBuyer {
+  payment: TPayment;
+  email: string;
+  phone: string;
+  address: string;
+}
+```
+
+### Интерфейс IProductsResponse
+
+Описывает ответ сервера на запрос списка товаров.
+
+Поля:
+- `total: number` — общее количество товаров
+- `items: IProduct[]` — массив товаров
+
+```typescript
+interface IProductsResponse {
+  total: number;
+  items: IProduct[];
+}
+```
+
+### Интерфейс IOrderRequest
+
+Описывает данные заказа, отправляемые на сервер.
+
+Поля:
+- `payment: TPayment` — способ оплаты
+- `email: string` — email покупателя
+- `phone: string` — телефон покупателя
+- `address: string` — адрес доставки
+- `total: number` — сумма заказа
+- `items: string[]` — массив идентификаторов товаров
+
+```typescript
+interface IOrderRequest {
+  payment: TPayment;
+  email: string;
+  phone: string;
+  address: string;
+  total: number;
+  items: string[];
+}
+```
+
+### Интерфейс IOrderResponse
+
+Описывает ответ сервера после оформления заказа.
+
+Поля:
+- `id: string` — идентификатор созданного заказа
+- `total: number` — сумма заказа
+
+```typescript
+interface IOrderResponse {
+  id: string;
+  total: number;
+}
+```
+
+## Модели данных
+
+### Класс Products
+
+Модель данных каталога товаров. Отвечает за хранение массива товаров и выбранного товара.
+
+Конструктор класса не принимает параметров.
+
+Поля класса:
+- `_items: IProduct[]` — массив всех товаров каталога
+- `_selected: IProduct | null` — товар, выбранный для подробного отображения
+
+Методы класса:
+- `setItems(items: IProduct[]): void` — сохраняет массив товаров, полученный в параметрах
+- `getItems(): IProduct[]` — возвращает массив всех товаров
+- `getItem(id: string): IProduct | undefined` — возвращает товар по его id
+- `setSelected(product: IProduct): void` — сохраняет товар для подробного отображения
+- `getSelected(): IProduct | null` — возвращает товар для подробного отображения
+
+### Класс Basket
+
+Модель данных корзины. Отвечает за хранение товаров, выбранных покупателем.
+
+Конструктор класса не принимает параметров.
+
+Поля класса:
+- `_items: IProduct[]` — массив товаров в корзине
+
+Методы класса:
+- `getItems(): IProduct[]` — возвращает массив товаров в корзине
+- `addItem(product: IProduct): void` — добавляет товар в корзину
+- `removeItem(product: IProduct): void` — удаляет товар из корзины
+- `clear(): void` — очищает корзину
+- `getTotal(): number` — возвращает общую стоимость товаров в корзине
+- `getCount(): number` — возвращает количество товаров в корзине
+- `contains(id: string): boolean` — проверяет наличие товара в корзине по id
+
+### Класс Buyer
+
+Модель данных покупателя. Отвечает за хранение данных, необходимых для оформления заказа.
+
+Конструктор класса не принимает параметров.
+
+Поля класса:
+- `_data: IBuyer` — объект с данными покупателя (payment, email, phone, address)
+
+Методы класса:
+- `setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void` — сохраняет одно поле данных покупателя
+- `getData(): IBuyer` — возвращает все данные покупателя
+- `clear(): void` — очищает данные покупателя
+- `validate(): Partial<Record<keyof IBuyer, string>>` — возвращает объект с ошибками валидации. Если ошибок нет — пустой объект
+
+## Слой коммуникации
+
+### Класс AppApi
+
+Класс для взаимодействия с сервером. Использует композицию: принимает в конструктор экземпляр класса `Api` и использует его методы для выполнения запросов.
+
+Конструктор:
+`constructor(api: IApi)` — принимает объект, соответствующий интерфейсу `IApi`, который будет использоваться для выполнения запросов.
+
+Поля класса:
+- `_api: IApi` — объект для выполнения HTTP-запросов
+
+Методы класса:
+- `getProducts(): Promise<IProductsResponse>` — выполняет GET-запрос на эндпоинт `/product/` и возвращает промис с объектом, содержащим массив товаров
+- `makeOrder(data: IOrderRequest): Promise<IOrderResponse>` — выполняет POST-запрос на эндпоинт `/order` с данными заказа и возвращает промис с подтверждением покупки
