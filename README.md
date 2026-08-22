@@ -214,8 +214,8 @@ interface IOrderResponse {
 Конструктор класса не принимает параметров.
 
 Поля класса:
-- `_items: IProduct[]` — массив всех товаров каталога
-- `_selected: IProduct | null` — товар, выбранный для подробного отображения
+- `items: IProduct[]` — массив всех товаров каталога
+- `selected: IProduct | null` — товар, выбранный для подробного отображения
 
 Методы класса:
 - `setItems(items: IProduct[]): void` — сохраняет массив товаров, полученный в параметрах
@@ -231,7 +231,7 @@ interface IOrderResponse {
 Конструктор класса не принимает параметров.
 
 Поля класса:
-- `_items: IProduct[]` — массив товаров в корзине
+- `items: IProduct[]` — массив товаров в корзине
 
 Методы класса:
 - `getItems(): IProduct[]` — возвращает массив товаров в корзине
@@ -249,7 +249,7 @@ interface IOrderResponse {
 Конструктор класса не принимает параметров.
 
 Поля класса:
-- `_data: IBuyer` — объект с данными покупателя (payment, email, phone, address)
+- `data: IBuyer` — объект с данными покупателя (payment, email, phone, address)
 
 Методы класса:
 - `setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void` — сохраняет одно поле данных покупателя
@@ -267,7 +267,7 @@ interface IOrderResponse {
 `constructor(api: IApi)` — принимает объект, соответствующий интерфейсу `IApi`, который будет использоваться для выполнения запросов.
 
 Поля класса:
-- `_api: IApi` — объект для выполнения HTTP-запросов
+- `api: IApi` — объект для выполнения HTTP-запросов
 
 Методы класса:
 - `getProducts(): Promise<IProductsResponse>` — выполняет GET-запрос на эндпоинт `/product/` и возвращает промис с объектом, содержащим массив товаров

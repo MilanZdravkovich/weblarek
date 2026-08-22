@@ -1,10 +1,10 @@
 import './scss/styles.scss';
 
 import {Api} from './components/base/Api.ts'
-import {AppApi} from './components/base/AppApi.ts'
-import {Products} from './components/base/Models/Products.ts'
-import {Basket} from './components/base/Models/Basket.ts'
-import {Buyer} from './components/base/Models/Buyer.ts'
+import {AppApi} from './components/communications/AppApi.ts'
+import {Products} from './components/Models/Products.ts'
+import {Basket} from './components/Models/Basket.ts'
+import {Buyer} from './components/Models/Buyer.ts'
 import {API_URL} from './utils/constants'
 import {apiProducts} from './utils/data'
 

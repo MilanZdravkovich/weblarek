@@ -1,23 +1,23 @@
-import {IBuyer} from "../../../types/index.ts"
+import {IBuyer, TValidationErrors} from "../../types/index.ts"
 
 export class Buyer {
-  private _data: IBuyer = {
-    payment: 'card',
+  private data: IBuyer = {
+    payment: null,
     email: '',
     phone: '',
     address: ''
   }
 
   setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void {
-    this._data[field] = value
+    this.data[field] = value
   }
 
   getData(): IBuyer {
-    return this._data
+    return this.data
   }
 
   clear(): void {
-    this._data = {
+    this.data = {
       payment: 'card',
       email: '',
       phone: '',
@@ -26,21 +26,21 @@ export class Buyer {
   }
 
   validate(): Partial<Record<keyof IBuyer, string>> {
-    const errors: Partial<Record<keyof IBuyer, string>> = {}
+    const errors: TValidationErrors = {}
     
-    if (!this._data.payment) {
+    if (!this.data.payment) {
       errors.payment = 'Не выбран способ оплаты'
     }
 
-    if (!this._data.address) {
+    if (!this.data.address) {
       errors.address = 'Укажите адрес доставки'
     }
 
-    if (!this._data.email) {
+    if (!this.data.email) {
       errors.email = 'Укажите email'
     }
 
-    if (!this._data.phone) {
+    if (!this.data.phone) {
       errors.phone = 'Укажите телефон'
     }
 
