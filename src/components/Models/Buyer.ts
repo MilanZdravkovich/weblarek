@@ -18,7 +18,7 @@ export class Buyer {
 
   clear(): void {
     this.data = {
-      payment: 'card',
+      payment: null,
       email: '',
       phone: '',
       address: ''
