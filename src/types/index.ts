@@ -29,8 +29,12 @@ export interface IProductsResponse {
 }
 
 export interface IOrderRequest {
-    total: number
-    items: string[]
+    payment: TPayment;
+    email: string;
+    phone: string;
+    address: string;
+    total: number;
+    items: string[];
 }
 
 export interface IOrderResponse {
@@ -39,3 +43,46 @@ export interface IOrderResponse {
 }
 
 export type TValidationErrors = Partial<Record<keyof IBuyer, string>>
+
+export interface ICardCatalog {
+    category: string,
+    title: string,
+    image: string,
+    price: number | null;
+}
+
+export interface ICardPreview {
+    category: string,
+    title: string,
+    description: string,
+    image: string,
+    price: number | null,
+    isInBasket: boolean;
+}
+
+export interface ICardBasket {
+    index: number,
+    title: string,
+    price: number | null;
+}
+
+export interface IBasketView {
+    items: HTMLElement[];
+    total: number;
+}
+
+export interface IOrderForm {
+    payment: TPayment | null,
+    address: string,
+    errors: TValidationErrors;
+}
+
+export interface IContactsForm {
+    email: string,
+    phone: string,
+    errors: TValidationErrors;
+}
+
+export interface ISuccessView {
+    total: number;
+}

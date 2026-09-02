@@ -1,4 +1,5 @@
-import {IBuyer, TValidationErrors} from "../../types/index.ts"
+import {IBuyer, TValidationErrors} from "../../types"
+import {IEvents} from "../base/Events"
 
 export class Buyer {
   private data: IBuyer = {
@@ -8,8 +9,11 @@ export class Buyer {
     address: ''
   }
 
+  constructor(private events: IEvents) {}
+
   setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void {
     this.data[field] = value
+    this.events.emit('buyer:changed', {data: this.data})
   }
 
   getData(): IBuyer {
@@ -23,9 +27,10 @@ export class Buyer {
       phone: '',
       address: ''
     }
+    this.events.emit('buyer:changed', {data: this.data})
   }
 
-  validate(): Partial<Record<keyof IBuyer, string>> {
+  validate(): TValidationErrors {
     const errors: TValidationErrors = {}
     
     if (!this.data.payment) {
@@ -45,5 +50,27 @@ export class Buyer {
     }
 
     return errors
+  }
+
+  validateFields(fields: (keyof IBuyer)[]): TValidationErrors {
+    const errors: TValidationErrors = {};
+
+    if (fields.includes('payment') && !this.data.payment) {
+        errors.payment = 'Не выбран способ оплаты';
+    }
+
+    if (fields.includes('address') && !this.data.address) {
+        errors.address = 'Укажите адрес доставки';
+    }
+
+    if (fields.includes('email') && !this.data.email) {
+        errors.email = 'Укажите email';
+    }
+
+    if (fields.includes('phone') && !this.data.phone) {
+        errors.phone = 'Укажите телефон';
+    }
+
+    return errors;
   }
 }

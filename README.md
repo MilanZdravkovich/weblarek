@@ -272,3 +272,181 @@ interface IOrderResponse {
 Методы класса:
 - `getProducts(): Promise<IProductsResponse>` — выполняет GET-запрос на эндпоинт `/product/` и возвращает промис с объектом, содержащим массив товаров
 - `makeOrder(data: IOrderRequest): Promise<IOrderResponse>` — выполняет POST-запрос на эндпоинт `/order` с данными заказа и возвращает промис с подтверждением покупки.
+
+## Слой представления (View)
+
+### Класс Header
+
+Отвечает за отображение шапки сайта: логотип, кнопку корзины и счётчик товаров.
+
+Конструктор:
+`constructor(container: HTMLElement, onBasketClick: () => void)` — принимает DOM-элемент шапки и обработчик клика по кнопке корзины.
+
+Поля:
+- `basketButton: HTMLButtonElement` — кнопка корзины
+- `basketCounter: HTMLElement` — счётчик товаров
+
+Методы:
+- `set count(value: number)` — обновляет значение счётчика
+
+### Класс Gallery
+
+Отвечает за отображение каталога товаров на главной странице.
+
+Конструктор:
+`constructor(container: HTMLElement)` — принимает DOM-элемент галереи.
+
+Методы:
+- `set items(items: HTMLElement[])` — отображает массив карточек товаров
+
+### Класс Modal
+
+Универсальное модальное окно. Отвечает за отображение контента в модальном окне, открытие и закрытие.
+
+Конструктор:
+`constructor(container: HTMLElement)` — принимает DOM-элемент модального окна.
+
+Поля:
+- `closeButton: HTMLButtonElement` — кнопка закрытия
+
+Методы:
+- `set content(value: HTMLElement)` — вставляет контент в модальное окно
+- `open(): void` — открывает модальное окно
+- `close(): void` — закрывает модальное окно
+- `render(data?: Partial<IModalData>): HTMLElement` — рендерит контент и открывает окно
+
+### Класс Card
+
+Абстрактный базовый класс для всех карточек товара. Содержит общую логику отображения названия и цены.
+
+Конструктор:
+`constructor(container: HTMLElement)` — принимает DOM-элемент карточки.
+
+Поля:
+- `titleElement: HTMLHeadingElement` — элемент названия
+- `priceElement: HTMLParagraphElement` — элемент цены
+
+Методы:
+- `set title(value: string)` — устанавливает название
+- `set price(value: number | null)` — устанавливает цену или «Недоступно»
+
+### Класс CardCatalog
+
+Карточка товара в каталоге. Наследуется от `Card`.
+
+Конструктор:
+`constructor(container: HTMLElement, onClick: (id: string) => void)` — принимает DOM-элемент и обработчик клика.
+
+Методы:
+- `set itemId(value: string)` — сохраняет id товара
+- `set category(value: string)` — устанавливает категорию и модификатор цвета
+- `set image(value: string)` — устанавливает изображение
+
+### Класс CardPreview
+
+Карточка товара в модальном окне. Наследуется от `Card`.
+
+Конструктор:
+`constructor(container: HTMLElement, onButtonClick: (id: string) => void)` — принимает DOM-элемент и обработчик клика по кнопке.
+
+Методы:
+- `set itemId(value: string)` — сохраняет id товара
+- `set category(value: string)` — устанавливает категорию
+- `set image(value: string)` — устанавливает изображение
+- `set description(value: string)` — устанавливает описание
+- `set isInBasket(value: boolean)` — меняет текст кнопки на «В корзину» или «Удалить из корзины»
+
+### Класс CardBasket
+
+Карточка товара в корзине. Наследуется от `Card`.
+
+Конструктор:
+`constructor(container: HTMLElement, onDelete: (id: string) => void)` — принимает DOM-элемент и обработчик удаления.
+
+Методы:
+- `set itemId(value: string)` — сохраняет id товара
+- `set index(value: number)` — устанавливает порядковый номер
+
+### Класс BasketView
+
+Отвечает за отображение корзины: список товаров, общую стоимость и кнопку оформления.
+
+Конструктор:
+`constructor(container: HTMLElement, onOrder: () => void)` — принимает DOM-элемент корзины и обработчик оформления заказа.
+
+Поля:
+- `listElement: HTMLElement` — список товаров
+- `totalElement: HTMLElement` — общая стоимость
+- `buttonElement: HTMLButtonElement` — кнопка «Оформить»
+
+Методы:
+- `set items(items: HTMLElement[])` — отображает товары или «Корзина пуста»
+- `set total(value: number)` — обновляет общую стоимость
+- `set isDisabled(value: boolean)` — активирует/деактивирует кнопку
+
+### Класс Form
+
+Абстрактный базовый класс для форм. Наследуется от `Component`.
+
+Конструктор:
+`constructor(container: HTMLElement, onSubmit: () => void)` — принимает DOM-элемент формы и обработчик отправки.
+
+Поля:
+- `submitButton: HTMLButtonElement` — кнопка отправки
+- `errorsElement: HTMLElement` — элемент для отображения ошибок
+
+Методы:
+- `set errors(value: TValidationErrors)` — отображает ошибки
+- `set isDisabled(value: boolean)` — активирует/деактивирует кнопку
+
+### Класс OrderForm
+
+Форма первого шага оформления: выбор оплаты и адрес. Наследуется от `Form`.
+
+Конструктор:
+`constructor(container: HTMLElement, onSubmit: () => void, onInput: (field: string, value: string) => void)` — принимает DOM-элемент, обработчик отправки и обработчик ввода.
+
+Методы:
+- `set payment(value: string | null)` — выделяет выбранный способ оплаты
+- `set address(value: string)` — устанавливает адрес
+
+### Класс ContactsForm
+
+Форма второго шага оформления: email и телефон. Наследуется от `Form`.
+
+Конструктор:
+`constructor(container: HTMLElement, onSubmit: () => void, onInput: (field: string, value: string) => void)` — принимает DOM-элемент, обработчик отправки и обработчик ввода.
+
+Методы:
+- `set email(value: string)` — устанавливает email
+- `set phone(value: string)` — устанавливает телефон
+
+### Класс SuccessView
+
+Отображает сообщение об успешной оплате.
+
+Конструктор:
+`constructor(container: HTMLElement, onClose: () => void)` — принимает DOM-элемент и обработчик закрытия.
+
+Методы:
+- `set total(value: number)` — отображает списанную сумму
+
+## Презентер
+
+Презентер реализован в файле `main.ts` и связывает модели данных, представления и коммуникационный слой.
+
+Обязанности:
+- Инициализация всех компонентов приложения
+- Подписка на события от моделей данных и представлений
+- Обновление представлений при изменении данных
+- Обработка действий пользователя
+- Выполнение запросов к серверу и обработка ответов
+
+События:
+- `products:changed` — каталог товаров обновился
+- `product:open` — открыть превью товара
+- `basket:open` — открыть корзину
+- `basket:changed` — корзина изменилась
+- `order:open` — открыть форму оформления
+- `contacts:open` — открыть форму контактов
+- `order:submit` — отправить заказ
