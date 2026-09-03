@@ -6,15 +6,13 @@ export class CardCatalog extends Card<ICardCatalog> {
   private categoryElement: HTMLElement
   private imageElement: HTMLImageElement
 
-  constructor(container: HTMLElement, onClick: (id: string) => void) {
+  constructor(container: HTMLElement, onClick: () => void) {
     super(container)
     this.categoryElement = container.querySelector('.card__category')!
     this.imageElement = container.querySelector('.card__image')!
 
-    container.addEventListener('click', () => onClick(this.id))
+    container.addEventListener('click', onClick)
 }
-
-private id: string = ''
 
   set category(value: string) {
     this.categoryElement.textContent = value
@@ -26,9 +24,5 @@ private id: string = ''
 
   set image(value: string) {
     this.imageElement.src = value
-  }
-
-  set itemId(value: string) {
-  this.id = value
   }
 }

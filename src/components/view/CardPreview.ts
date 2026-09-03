@@ -8,20 +8,14 @@ export class CardPreview extends Card<ICardPreview> {
   private descriptionElement: HTMLElement
   private buttonElement: HTMLButtonElement
 
-  constructor(container: HTMLElement, onButtonClicked: (id: string) => void) {
+  constructor(container: HTMLElement, onButtonClick: () => void) {
     super(container)
     this.categoryElement = container.querySelector('.card__category')!
     this.imageElement = container.querySelector('.card__image')!
     this.descriptionElement = container.querySelector('.card__text')!
     this.buttonElement = container.querySelector('.card__button')!
 
-    this.buttonElement.addEventListener('click', () => onButtonClicked(this.id))
-  }
-
-  private id: string = ''
-
-  set itemId(value: string) {
-    this.id = value
+    this.buttonElement.addEventListener('click', onButtonClick)
   }
 
   set category(value: string) {
@@ -40,11 +34,11 @@ export class CardPreview extends Card<ICardPreview> {
     this.descriptionElement.textContent = value
   }
 
-  set isInBasket(value: boolean) {
-    this.buttonElement.textContent = value ? 'Удалить из корзины' : 'В корзину'
-    if (this.price === null) {
-      this.buttonElement.disabled = true
-      this.buttonElement.textContent = 'Недоступно'
-    }
+  set buttonText(value: string) {
+    this.buttonElement.textContent = value
+  }
+
+  set isDisabled(value: boolean) {
+    this.buttonElement.disabled = value
   }
 }

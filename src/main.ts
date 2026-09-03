@@ -44,6 +44,13 @@ const successTemplate = document.getElementById('success') as HTMLTemplateElemen
 const header = new Header(headerContainer, () => events.emit('basket:open'))
 const gallery = new Gallery(galleryContainer)
 const modal = new Modal(modalContainer)
+const basketView = new BasketView(cloneTemplate(basketTemplate), () => events.emit('order:open'))
+const orderForm = new OrderForm(cloneTemplate(orderTemplate), () => events.emit('contacts:open'),
+ (field, value) => {buyerModel.setField(field as 'payment' | 'address', value as string)}
+)
+const contactsForm = new ContactsForm(cloneTemplate(contactsTemplate), () => events.emit('order:submit'),
+  (field, value) => {buyerModel.setField(field as 'email' | 'phone', value)}
+)
 
 function cloneTemplate(template: HTMLTemplateElement): HTMLElement {
   return template.content.firstElementChild!.cloneNode(true) as HTMLElement
@@ -51,15 +58,10 @@ function cloneTemplate(template: HTMLTemplateElement): HTMLElement {
 
 function createCatalogCard(product: IProduct): HTMLElement {
   const container = cloneTemplate(cardCatalogTemplate)
-  const card = new CardCatalog(container, (id) => {
-    const item = productsModel.getItem(id)
-    if (item) {
-      productsModel.setSelected(item)
-      events.emit('product:open', {product: item})
-    }
-  })
+  const card = new CardCatalog(container, () => {
+      events.emit('product:open', {id: product.id})
+    })
 
-  card.itemId = product.id
   card.category = product.category
   card.title = product.title
   card.image = CDN_URL + product.image
@@ -72,17 +74,10 @@ function renderBasket(basketView: BasketView): void {
   const items = basketModel.getItems()
   const basketItems = items.map((item, index) => {
     const container = cloneTemplate(cardBasketTemplate)
-    const card = new CardBasket(container, (id) => {
-      const product = productsModel.getItem(id)
-      if (product) {
-        basketModel.removeItem(product)
-        const updatedBasket = new BasketView(cloneTemplate(basketTemplate), () => events.emit('order:open'))
-        renderBasket(updatedBasket)
-        modal.render({content: updatedBasket.render()})
-      }
-    })
+    const card = new CardBasket(container, () => {
+        events.emit('basket:remove', {id: item.id})
+      })
 
-    card.itemId = item.id
     card.index = index + 1
     card.title = item.title
     card.price = item.price
@@ -100,85 +95,76 @@ events.on('products:changed', (data: {items: IProduct[]}) => {
   gallery.items = card
 })
 
-events.on('product:open', (data: {product: IProduct}) => {
+events.on('product:open', (data: {id: string}) => {
+  const product = productsModel.getItem(data.id)
+  if (!product) return
+
+  productsModel.setSelected(product)
+
   const container = cloneTemplate(cardPreviewTemplate)
-  const isInBasket = basketModel.contains(data.product.id)
-  const card = new CardPreview(container, (id) => {
-    const item = productsModel.getItem(id)
-    if (item) {
-      if (basketModel.contains(id)) {
-        basketModel.removeItem(item)
-      } else {
-        basketModel.addItem(item)
-      }
-      modal.close()
-    }
-  })
+  const isInBasket = basketModel.contains(product.id)
+  const card = new CardPreview(container, () => {
+      events.emit('basket:toggle', {id: product.id})
+    })
 
-  card.itemId = data.product.id
-  card.category = data.product.category
-  card.title = data.product.title
-  card.description = data.product.description
-  card.image = CDN_URL + data.product.image
-  card.price = data.product.price
-  card.isInBasket = isInBasket
+  card.category = product.category
+  card.title = product.title
+  card.description = product.description
+  card.image = CDN_URL + product.image
+  card.price = product.price
+  if (product.price === null) {
+    card.buttonText = 'Недоступно'
+    card.isDisabled = true
+  } else {
+    card.buttonText = isInBasket ? 'Удалить из корзины' : 'В корзину'
+    card.isDisabled = false
+  }
 
-  modal.render({content: container})
+  modal.render({content: card.render()})
+})
+
+events.on('basket:toggle', (data: {id: string}) => {
+  const product = productsModel.getItem(data.id)
+  if (!product) return
+
+  if (basketModel.contains(data.id)) {
+    basketModel.removeItem(product)
+  } else {
+    basketModel.addItem(product)
+  }
+  modal.close()
 })
 
 events.on('basket:open', () => {
-  const container = cloneTemplate(basketTemplate)
-  const basketView = new BasketView(container, () => events.emit('order:open'))
-
   renderBasket(basketView)
-
-  modal.render({content: container})
+  modal.render({content: basketView.render()})
 })
 
 events.on('basket:changed', () => {
   header.count = basketModel.getCount()
+  renderBasket(basketView)
+})
+
+events.on('basket:remove', (data: {id: string}) => {
+  basketModel.removeItemById(data.id)
 })
 
 events.on('order:open', () => {
-  const container = cloneTemplate(orderTemplate)
-  const orderForm = new OrderForm(
-    container,
-    () => events.emit('contacts:open'),
-    (field, value) => {
-      buyerModel.setField(field as 'payment' | 'address', value as string)
-
-      orderForm.errors = buyerModel.validateFields(['payment', 'address'])
-      orderForm.isDisabled = Object.keys(buyerModel.validateFields(['payment', 'address'])).length > 0
-    }
-  )
-
   orderForm.payment = buyerModel.getData().payment
   orderForm.address = buyerModel.getData().address
   orderForm.errors = buyerModel.validateFields(['payment', 'address'])
   orderForm.isDisabled = Object.keys(buyerModel.validateFields(['payment', 'address'])).length > 0
 
-  modal.render({content: container})
+  modal.render({content: orderForm.render()})
 })
 
 events.on('contacts:open', () => {
-  const container = cloneTemplate(contactsTemplate)
-  const contactsForm = new ContactsForm(
-    container,
-    () => events.emit('order:submit'),
-    (field, value) => {
-      buyerModel.setField(field as 'email' | 'phone', value)
-
-      contactsForm.errors = buyerModel.validateFields(['email', 'phone'])
-      contactsForm.isDisabled = Object.keys(buyerModel.validateFields(['email', 'phone'])).length > 0
-    }
-  )
-
   contactsForm.email = buyerModel.getData().email
   contactsForm.phone = buyerModel.getData().phone
   contactsForm.errors = buyerModel.validateFields(['email', 'phone'])
   contactsForm.isDisabled = Object.keys(buyerModel.validateFields(['email', 'phone'])).length > 0
 
-  modal.render({content: container})
+  modal.render({content: contactsForm.render()})
 })
 
 events.on('order:submit', () => {
@@ -201,11 +187,26 @@ events.on('order:submit', () => {
       const successView = new SuccessView(container, () => modal.close())
       successView.total = response.total
 
-      modal.render({content: container})
+      modal.render({content: successView.render()})
     })
     .catch((error) => {
       console.error('Ошибка заказа: ', error)
     })
+})
+
+
+events.on('buyer:changed', () => {
+  const buyerData = buyerModel.getData()
+
+  orderForm.payment = buyerData.payment
+  orderForm.address = buyerData.address
+  orderForm.errors = buyerModel.validateFields(['payment', 'address'])
+  orderForm.isDisabled = Object.keys(buyerModel.validateFields(['payment', 'address'])).length > 0
+
+  contactsForm.email = buyerData.email
+  contactsForm.phone = buyerData.phone
+  contactsForm.errors = buyerModel.validateFields(['email', 'phone'])
+  contactsForm.isDisabled = Object.keys(buyerModel.validateFields(['email', 'phone'])).length > 0
 })
 
 appApi.getProducts()
@@ -215,61 +216,3 @@ appApi.getProducts()
   .catch((error) => {
     console.error('Ошибка загрузки товаров: ', error)
   })
-
-// console.log('=== Тестирование каталога товаров ===')
-
-// productsModel.setItems(apiProducts.items)
-// console.log('Maссив товаров из каталога: ', productsModel.getItems())
-
-// const productId = apiProducts.items[0].id
-// console.log('Товар по id: ', productsModel.getItem(productId))
-
-// productsModel.setSelected(apiProducts.items[1])
-// console.log('Выбранный товар: ', productsModel.getSelected())
-
-// console.log('=== Тестирование корзины ===')
-
-// basketModel.addItem(apiProducts.items[0])
-// basketModel.addItem(apiProducts.items[1])
-// console.log('Товары в корзине: ', basketModel.getItems())
-
-// console.log('Количество товаров: ', basketModel.getCount())
-// console.log('Общая стоимость: ', basketModel.getTotal())
-
-// console.log('Товар с id в корзне: ', basketModel.contains(productId))
-
-// basketModel.removeItem(apiProducts.items[0])
-// console.log('После удаления: ', basketModel.getItems())
-
-// basketModel.clear()
-// console.log('После очистки: ', basketModel.getItems())
-// console.log('Количество после очистки: ', basketModel.getCount())
-
-// console.log('=== Тестирование данных покупателя ===')
-
-// buyerModel.setField('address', 'Санкт-Петербург, ул. Восстания, 1')
-// buyerModel.setField('email', 'test@test.ru')
-// buyerModel.setField('phone', '+71234567890')
-// buyerModel.setField('payment', 'cash')
-
-// console.log('Данные покупателя: ', buyerModel.getData())
-
-// console.log('Ошибка валидации: ', buyerModel.validate())
-
-// buyerModel.clear()
-// console.log('После очистки: ', buyerModel.getData())
-
-// console.log('Ошибки после очистки: ', buyerModel.validate())
-
-// console.log('=== Работа с сервером ===')
-
-// appApi.getProducts()
-//   .then((response) => {
-//     console.log('Ответ сервера: ', response)
-
-//     productsModel.setItems(response.items)
-//     console.log('Каталог из сервера: ', productsModel.getItems())
-//   })
-//   .catch((error) => {
-//     console.error('Ошибка при получении товаров: ', error)
-//   })
