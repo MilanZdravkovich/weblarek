@@ -51,6 +51,7 @@ const orderForm = new OrderForm(cloneTemplate(orderTemplate), () => events.emit(
 const contactsForm = new ContactsForm(cloneTemplate(contactsTemplate), () => events.emit('order:submit'),
   (field, value) => {buyerModel.setField(field as 'email' | 'phone', value)}
 )
+const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), () => {events.emit('basket:toggle')})
 
 function cloneTemplate(template: HTMLTemplateElement): HTMLElement {
   return template.content.firstElementChild!.cloneNode(true) as HTMLElement
@@ -59,7 +60,7 @@ function cloneTemplate(template: HTMLTemplateElement): HTMLElement {
 function createCatalogCard(product: IProduct): HTMLElement {
   const container = cloneTemplate(cardCatalogTemplate)
   const card = new CardCatalog(container, () => {
-      events.emit('product:open', {id: product.id})
+      productsModel.setSelected(product)
     })
 
   card.category = product.category
@@ -95,39 +96,11 @@ events.on('products:changed', (data: {items: IProduct[]}) => {
   gallery.items = card
 })
 
-events.on('product:open', (data: {id: string}) => {
-  const product = productsModel.getItem(data.id)
+events.on('basket:toggle', () => {
+  const product = productsModel.getSelected()
   if (!product) return
 
-  productsModel.setSelected(product)
-
-  const container = cloneTemplate(cardPreviewTemplate)
-  const isInBasket = basketModel.contains(product.id)
-  const card = new CardPreview(container, () => {
-      events.emit('basket:toggle', {id: product.id})
-    })
-
-  card.category = product.category
-  card.title = product.title
-  card.description = product.description
-  card.image = CDN_URL + product.image
-  card.price = product.price
-  if (product.price === null) {
-    card.buttonText = 'Недоступно'
-    card.isDisabled = true
-  } else {
-    card.buttonText = isInBasket ? 'Удалить из корзины' : 'В корзину'
-    card.isDisabled = false
-  }
-
-  modal.render({content: card.render()})
-})
-
-events.on('basket:toggle', (data: {id: string}) => {
-  const product = productsModel.getItem(data.id)
-  if (!product) return
-
-  if (basketModel.contains(data.id)) {
+  if (basketModel.contains(product.id)) {
     basketModel.removeItem(product)
   } else {
     basketModel.addItem(product)
@@ -136,7 +109,6 @@ events.on('basket:toggle', (data: {id: string}) => {
 })
 
 events.on('basket:open', () => {
-  renderBasket(basketView)
   modal.render({content: basketView.render()})
 })
 
@@ -150,20 +122,10 @@ events.on('basket:remove', (data: {id: string}) => {
 })
 
 events.on('order:open', () => {
-  orderForm.payment = buyerModel.getData().payment
-  orderForm.address = buyerModel.getData().address
-  orderForm.errors = buyerModel.validateFields(['payment', 'address'])
-  orderForm.isDisabled = Object.keys(buyerModel.validateFields(['payment', 'address'])).length > 0
-
   modal.render({content: orderForm.render()})
 })
 
 events.on('contacts:open', () => {
-  contactsForm.email = buyerModel.getData().email
-  contactsForm.phone = buyerModel.getData().phone
-  contactsForm.errors = buyerModel.validateFields(['email', 'phone'])
-  contactsForm.isDisabled = Object.keys(buyerModel.validateFields(['email', 'phone'])).length > 0
-
   modal.render({content: contactsForm.render()})
 })
 
@@ -192,6 +154,29 @@ events.on('order:submit', () => {
     .catch((error) => {
       console.error('Ошибка заказа: ', error)
     })
+})
+
+events.on('products:selected', () => {
+  const product = productsModel.getSelected()
+  if (!product) return
+
+  const isInBasket = basketModel.contains(product.id)
+
+  cardPreview.category = product.category
+  cardPreview.title = product.title
+  cardPreview.description = product.description
+  cardPreview.image = CDN_URL + product.image
+  cardPreview.price = product.price
+
+  if (product.price === null) {
+    cardPreview.buttonText = 'Недоступно'
+    cardPreview.isDisabled = true
+  } else {
+    cardPreview.buttonText = isInBasket ? 'Удалить из корзины' : 'В корзину'
+    cardPreview.isDisabled = false
+  }
+
+  modal.render({content: cardPreview.render()})
 })
 
 
